@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -47,6 +48,25 @@ public class BuildComponent extends AbstractComponentMojo {
    */
   private String excludeFiles;
 
+    /**
+     * Component folder
+     *
+     * @parameter default-value=""
+     */
+    private String componentFolder;
+    /**
+     * Output zip folder
+     *
+     * @parameter default-value=""
+     */
+    private String outputFolder;
+    /**
+     * Chosen server when executing a deploy
+     *
+     * @parameter expression="${environment}" default=""
+     */
+    protected String environment;
+
   public void execute() throws MojoExecutionException, MojoFailureException {
 
     determineComponentName();
@@ -58,7 +78,7 @@ public class BuildComponent extends AbstractComponentMojo {
 
     Map<String, String> zipListing = new TreeMap<String, String>();
 
-    zipListing.put("manifest.hda", "manifest.hda");
+    zipListing.put(new File(componentFolder,"manifest.hda").toString(), "manifest.hda");
     for (DataObject row : manifestRs.getRows()) {
       addToZipList(zipListing, row);
     }
@@ -67,7 +87,7 @@ public class BuildComponent extends AbstractComponentMojo {
       throw new MojoExecutionException("No component name specified or auto detected");
     }
 
-    File componentZipFile = new File(componentName + ".zip");
+    File componentZipFile = new File(new File(outputFolder,componentName).toString() + ".zip");
 
     getLog().info("Saving " + componentZipFile.getName() + " with contents:");
 
@@ -244,12 +264,15 @@ public class BuildComponent extends AbstractComponentMojo {
     if (location.startsWith(componentName)) {
       location = location.replaceFirst(componentName + "/", "");
     }
-
-    zipListing.put(location, "component/" + componentName + "/" + location);
+    String sourcePathFile="";
+    if (!"".equals(componentFolder) && null != componentFolder){
+        sourcePathFile=new File(componentFolder,location).toString();
+    }
+    zipListing.put(sourcePathFile, "component/" + componentName + "/" + location);
 
     if (entryType.equals("component")) {
 
-      File componentHdaFile = new File(location);
+      File componentHdaFile = new File(sourcePathFile);
 
       addComponentResourcesToZipList(zipListing, componentHdaFile);
     }
@@ -279,15 +302,35 @@ public class BuildComponent extends AbstractComponentMojo {
     for (DataObject resourceRow : componentResources.getRows()) {
       String type = resourceRow.get("type");
       String fileName = resourceRow.get("filename");
-
+      String sourcePathFile="";
+        if (!"".equals(componentFolder) && null != componentFolder){
+            sourcePathFile=new File(componentFolder,fileName).toString();
+        }
       // template entries have multiple files so they need to be included by
       // folder.
       if (type != null && type.equals("template")) {
-        String templateFolder = new File(fileName).getParent();
-        zipListing.put(templateFolder, baseZipPath + templateFolder);
-      } else {
-        zipListing.put(fileName, baseZipPath + fileName);
+        String templateFolder = new File(sourcePathFile).getParent();
+        zipListing.put(templateFolder, baseZipPath + fileName);
+      //Check different contexts for cfg files
+      }else if(type != null && type.equals("environment")){
+        zipListing.put(getEnvironmentFilePath(componentFolder, fileName, environment),baseZipPath + fileName);
+      }else{
+          zipListing.put(sourcePathFile, baseZipPath + fileName);
       }
     }
   }
+
+    private String getEnvironmentFilePath(String basefolder, String filename,String context){
+        if (null!=context && !"".equals(context)){
+            File contextFile=new File(basefolder,filename+"."+context);
+            if (contextFile.exists()){
+                getLog().info("Using context file : "+contextFile.toString());
+                return contextFile.toString();
+            }else{
+                getLog().warn("Context file not found :"+contextFile);
+            }
+        }
+        getLog().info( "Using default file: "+new File(basefolder,filename).toString());
+        return new File(basefolder,filename).toString();
+    }
 }

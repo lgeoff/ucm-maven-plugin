@@ -55,12 +55,20 @@ abstract class AbstractComponentMojo extends AbstractMojo {
    * @throws MojoExecutionException
    * 
    */
+
+    /**
+     * Ecomponent Folder
+     *
+     * @parameter default-value=""
+     */
+    private String componentFolder;
+
   protected void determineComponentName() throws MojoExecutionException {
     // if componentName passed, nothing to do
     if (componentName == null || componentName.length() == 0) {
 
       // 2. manifest.hda -> ComponentName=XXXX
-      File file = new File("manifest.hda");
+      File file = new File(componentFolder,"manifest.hda");
       BufferedReader br = null;
 
       try {
@@ -129,7 +137,7 @@ abstract class AbstractComponentMojo extends AbstractMojo {
   protected void determineComponentZip() {
     if (componentZip == null) {
       if (componentName != null) {
-        componentZip = new File(componentName + ".zip");
+        componentZip = new File(componentFolder,componentName + ".zip");
       }
     }
   }

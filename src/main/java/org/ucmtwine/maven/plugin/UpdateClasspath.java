@@ -78,11 +78,11 @@ public class UpdateClasspath extends AbstractComponentMojo {
   private String libFolder;
 
   /**
-   * Exclude scope when building classpath
-   * 
-   * @parameter default-value="provided"
-   */
-  private String excludeScope;
+     * Exclude scope when building classpath
+     *
+     * @parameter default-value="provided"
+     */
+    private String excludeScope;
 
   /**
    * Include this scope when building classpath
@@ -90,6 +90,13 @@ public class UpdateClasspath extends AbstractComponentMojo {
    * @parameter default-value="runtime"
    */
   private String includeScope;
+
+    /**
+     * Exclude scope when building classpath
+     *
+     * @parameter default-value=""
+     */
+    private String componentFolder;
 
   public void execute() throws MojoExecutionException, MojoFailureException {
 
@@ -109,7 +116,7 @@ public class UpdateClasspath extends AbstractComponentMojo {
       classpath.append(classPathRoot).append("/").append(project.getArtifactId()).append("-")
           .append(project.getVersion()).append(".jar;");
     }
-
+    getLog().info("classPathRoot:"+ classPathRoot);
     // @formatter:off
     executeMojo(
         plugin("org.apache.maven.plugins", "maven-dependency-plugin", "2.8"),
@@ -140,14 +147,14 @@ public class UpdateClasspath extends AbstractComponentMojo {
   /**
    * Writes the classpath to the hda file.
    * 
-   * @param classPathItems
+   * @param classpath
    * @throws MojoExecutionException
    */
   private void writeClassPath(String classpath) throws MojoExecutionException {
 
     getLog().info("New classpath: " + classpath);
 
-    File hdaFile = new File(componentName + ".hda");
+    File hdaFile = new File(componentFolder,componentName + ".hda");
 
     if (!hdaFile.exists()) {
       throw new MojoExecutionException("Hda file does not exist: " + hdaFile.toString());
@@ -164,7 +171,7 @@ public class UpdateClasspath extends AbstractComponentMojo {
 
   private void replaceClassPath(String newClassPath, File hdaFile) throws IOException, MojoExecutionException {
 
-    File tempFile = new File("temp.hda");
+    File tempFile = new File(componentFolder,"temp.hda");
 
     BufferedReader reader = new BufferedReader(new FileReader(hdaFile));
     PrintWriter writer = new PrintWriter(new FileWriter(tempFile, false));
@@ -182,7 +189,7 @@ public class UpdateClasspath extends AbstractComponentMojo {
     writer.flush();
     writer.close();
 
-    File oldFile = new File("old.hda");
+    File oldFile = new File(componentFolder,"old.hda");
 
     if (oldFile.exists()) {
       oldFile.delete();
