@@ -54,18 +54,6 @@ public class BuildComponent extends AbstractComponentMojo {
      * @parameter default-value=""
      */
     private String componentFolder;
-    /**
-     * Output zip folder
-     *
-     * @parameter default-value=""
-     */
-    private String outputFolder;
-    /**
-     * Chosen server when executing a deploy
-     *
-     * @parameter expression="${environment}" default=""
-     */
-    protected String environment;
 
   public void execute() throws MojoExecutionException, MojoFailureException {
 
@@ -87,12 +75,10 @@ public class BuildComponent extends AbstractComponentMojo {
       throw new MojoExecutionException("No component name specified or auto detected");
     }
 
-    File componentZipFile = new File(new File(outputFolder,componentName).toString() + ".zip");
-
-    getLog().info("Saving " + componentZipFile.getName() + " with contents:");
+    getLog().info("Saving " + componentZip.getName() + " with contents:");
 
     try {
-      zipStream = new ZipOutputStream(new FileOutputStream(componentZipFile, false));
+      zipStream = new ZipOutputStream(new FileOutputStream(componentZip, false));
 
     } catch (FileNotFoundException e) {
       throw new MojoExecutionException("Unable to open zip file for output", e);

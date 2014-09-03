@@ -28,11 +28,7 @@ abstract class AbstractComponentMojo extends AbstractMojo {
    */
   protected String componentName;
 
-  /**
-   * The component zip path, relative to the root of the project.
-   * 
-   * @parameter
-   */
+
   protected File componentZip;
 
   /**
@@ -62,6 +58,20 @@ abstract class AbstractComponentMojo extends AbstractMojo {
      * @parameter default-value=""
      */
     private String componentFolder;
+
+    /**
+     * Chosen server when executing a deploy
+     *
+     * @parameter expression="${environment}" default=""
+     */
+    protected String environment;
+
+    /**
+     * Output zip folder
+     *
+     * @parameter default-value=""
+     */
+    private String outputFolder;
 
   protected void determineComponentName() throws MojoExecutionException {
     // if componentName passed, nothing to do
@@ -137,7 +147,10 @@ abstract class AbstractComponentMojo extends AbstractMojo {
   protected void determineComponentZip() {
     if (componentZip == null) {
       if (componentName != null) {
-        componentZip = new File(componentFolder,componentName + ".zip");
+        componentZip = new File(new File(outputFolder,componentName).toString() +
+                (environment!=null&&!environment.equals("")?"-"+environment:"")
+                +".zip");
+          getLog().info(componentZip.toString());
       }
     }
   }
